@@ -3,6 +3,29 @@
 const fs = require('fs-extra')
 const yaml = require('js-yaml')
 const path = require('path')
+const zlib = require('zlib')
+
+/**
+ * Write array to gzipped numpy txt format
+ */
+const npSaveTxt = (array, filePath) => {
+  let output = fs.createWriteStream(`${filePath}.gz`)
+  let compress = zlib.createGzip()
+  compress.pipe(output)
+
+  for (let row of array) {
+    let line
+    if (Array.isArray(row)) {
+      // This is a matrix
+      line = row.map(it => Number.parseFloat(it).toExponential()).join(' ')
+    } else {
+      // This is a vector
+      line = Number.parseFloat(row).toExponential()
+    }
+    compress.write(`${line}\n`)
+  }
+  compress.end()
+}
 
 /**
  * Return a list of paths to model directories
@@ -79,3 +102,4 @@ module.exports.getModelMetadata = getModelMetadata
 module.exports.getModelId = getModelId
 module.exports.getCsvTime = getCsvTime
 module.exports.getModelCsvs = getModelCsvs
+module.exports.npSaveTxt = npSaveTxt
