@@ -49,6 +49,7 @@ class Model {
     return fs.readdirSync(this.dir)
       .filter(it => it.endsWith('csv'))
       .map(fileName => path.join(this.dir, fileName))
+      .sort()
   }
 
   getCsvFor (epiweek) {
@@ -63,7 +64,7 @@ class Model {
 const getCsvEpiweek = csvFile => {
   let baseName = path.basename(csvFile)
   let [week, year, ] = baseName.split('-')
-  return `${year}${leftPad(week.slice(2), 2)}`
+  return parseInt(`${year}${leftPad(week.slice(2), 2)}`)
 }
 
 /**
