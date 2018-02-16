@@ -66,8 +66,69 @@ const getCsvEpiweek = csvFile => {
   return `${year}${leftPad(week.slice(2), 2)}`
 }
 
+/**
+ * Return true if all the elements in array are the same
+ */
+const allSame = (array, comparator) => {
+  return array.every((it, i, arr) => comparator(it, arr[0]) === 0)
+}
+
+/**
+ * Argmax
+ */
+const argmax = (array, comparator) => {
+  let maxIdx = 0
+  let maxVal = array[maxIdx]
+
+  for (let i = 1; i < array.length; i++) {
+    if (comparator(array[i], maxVal) >= 0) {
+      maxIdx = i
+      maxVal = array[maxIdx]
+    }
+  }
+
+  return maxIdx
+}
+
+/**
+ * Return arrays of indices resulting in the intersection
+ * Assume the arrays are sorted
+ */
+const intersectionIndices = (arrays, comparator) => {
+  let indices = arrays.map(it => [])
+  let positions = arrays.map(it => 0)
+
+  // Values for current position
+  const positionValues = positions => arrays.map((arr, i) => arr[positions[i]])
+
+  // Whether the positions are valid
+  const positionsValid = positions => positions.every((p, i) => p < arrays[i].length)
+
+  // March forward
+  const advancePositions = positions => {
+    // Find the max item, increment all the others
+    let maxIdx = argmax(positionValues(positions), comparator)
+    return positions.map((p, i) => i === maxIdx ? p : p + 1)
+  }
+
+  // Values at the current positions
+  let currentValues
+  while (positionsValid(positions)) {
+    if (allSame(positionValues(positions), comparator)) {
+      // If all the elements of current position are equal
+      positions.forEach((p, i) => indices[i].push(p))
+      positions = positions.map(p => p + 1)
+    } else {
+      positions = advancePositions(positions)
+    }
+  }
+
+  return indices
+}
+
 module.exports.getModels = getModels
 module.exports.getCsvEpiweek = getCsvEpiweek
 module.exports.writeLines = writeLines
 module.exports.Model = Model
 module.exports.npSaveTxt = npSaveTxt
+module.exports.intersectionIndices = intersectionIndices
