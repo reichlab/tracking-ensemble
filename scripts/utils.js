@@ -3,103 +3,71 @@
 const fs = require('fs-extra')
 const yaml = require('js-yaml')
 const path = require('path')
-const zlib = require('zlib')
+const leftPad = require('left-pad')
+
+const writeLines = (lines, filePath) => {
+  fs.writeFileSync(filePath, lines.join('\n'))
+}
 
 /**
  * Write array to gzipped numpy txt format
  */
 const npSaveTxt = (array, filePath) => {
-  let output = fs.createWriteStream(`${filePath}.gz`)
-  let compress = zlib.createGzip()
-  compress.pipe(output)
-
+  let lines = []
   for (let row of array) {
-    let line
     if (Array.isArray(row)) {
       // This is a matrix
-      line = row.map(it => Number.parseFloat(it).toExponential()).join(' ')
+      lines.push(row.map(it => Number.parseFloat(it).toExponential()).join(' '))
     } else {
       // This is a vector
-      line = Number.parseFloat(row).toExponential()
+      lines.push(Number.parseFloat(row).toExponential())
     }
-    compress.write(`${line}\n`)
   }
-  compress.end()
+  writeLines(lines, filePath)
 }
 
 /**
  * Return a list of paths to model directories
  */
-const getModelDirs = (rootDir) => {
+const getModels = (rootDir) => {
   let modelsDir = path.join(rootDir, 'model-forecasts/component-models')
   return fs.readdirSync(modelsDir)
     .map(it => path.join(modelsDir, it))
     .filter(it => fs.statSync(it).isDirectory())
     .filter(it => fs.existsSync(path.join(it, 'metadata.txt')))
+    .map(it => new Model(it))
 }
 
-/**
- * Read metadata files for given model
- */
-const getModelMetadata = modelDir => {
-  return readYamlFile(path.join(modelDir, 'metadata.txt'))
-}
+class Model {
+  constructor (modelDir) {
+    this.dir = modelDir
+    this.meta = yaml.safeLoad(fs.readFileSync(path.join(this.dir, 'metadata.txt'), 'utf8'))
+    this.id = `${this.meta.team_name}-${this.meta.model_abbr}`
+  }
 
-/**
- * Return model id from modelDir
- */
-const getModelId = modelMeta => {
-  return `${modelMeta.team_name}-${modelMeta.model_abbr}`
+  get csvs () {
+    return fs.readdirSync(this.dir)
+      .filter(it => it.endsWith('csv'))
+      .map(fileName => path.join(this.dir, fileName))
+  }
+
+  getCsvFor (epiweek) {
+    let csvs = this.csvs
+    return csvs[csvs.map(getCsvEpiweek).findIndex(it => it === epiweek)]
+  }
 }
 
 /**
  * Return timing information about the csv
  */
-const getCsvTime = csvFile => {
+const getCsvEpiweek = csvFile => {
   let baseName = path.basename(csvFile)
-  let [epiweek, year, ] = baseName.split('-')
-  return {
-    epiweek: parseInt(epiweek.slice(2)) + '',
-    year: year
-  }
+  let [week, year, ] = baseName.split('-')
+  return `${year}${leftPad(week.slice(2), 2)}`
 }
 
-/**
- * Return path to all csvs in a model directory
- */
-const getModelCsvs = modelDir => {
-  return fs.readdirSync(modelDir)
-    .filter(item => item.endsWith('csv'))
-    .map(fileName => path.join(modelDir, fileName))
-}
-
-/**
- * Return unique items from array
- */
-const unique = arr => {
-  let hasNaN = false
-
-  let uniqueItems = arr.reduce(function (acc, it) {
-    if (Object.is(NaN, it)) {
-      hasNaN = true
-    } else if (acc.indexOf(it) === -1) {
-      acc.push(it)
-    }
-    return acc
-  }, [])
-
-  return hasNaN ? [...uniqueItems, NaN] : uniqueItems
-}
-
-const readYamlFile = fileName => {
-  return yaml.safeLoad(fs.readFileSync(fileName, 'utf8'))
-}
-
-module.exports.unique = unique
-module.exports.readYamlFile = readYamlFile
-module.exports.getModelDirs = getModelDirs
-module.exports.getModelMetadata = getModelMetadata
-module.exports.getModelId = getModelId
-module.exports.getCsvTime = getCsvTime
-module.exports.getModelCsvs = getModelCsvs
+module.exports.getModels = getModels
+module.exports.getCsvEpiweek = getCsvEpiweek
+module.exports.writeLines = writeLines
+module.exports.Model = Model
 module.exports.npSaveTxt = npSaveTxt
