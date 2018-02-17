@@ -127,6 +127,14 @@ const intersectionIndices = (arrays, comparator) => {
   return indices
 }
 
+/**
+ * Python style arange
+ */
+const arange = (low, high) => {
+  return Array(high - low).fill(low).map((it, idx) => it + idx)
+}
+
+module.exports.arange = arange
 module.exports.getModels = getModels
 module.exports.getCsvEpiweek = getCsvEpiweek
 module.exports.writeLines = writeLines
