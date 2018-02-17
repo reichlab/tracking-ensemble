@@ -1,0 +1,5 @@
+#+TITLE: Tracking Ensemble
+#+AUTHOR: Abhinav Tushar
+
+This repository explores possible ways to set dynamic ensemble weights in a time
+series prediction setting.
