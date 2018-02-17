@@ -4,7 +4,6 @@
 const fct = require('flusight-csv-tools')
 const fs = require('fs-extra')
 const path = require('path')
-const ensureDir = require('ensure-dir')
 const u = require('./utils')
 
 if (process.argv.length < 4) {
@@ -16,7 +15,7 @@ const INPUT_DIR = process.argv[2]
 const OUTPUT_DIR = process.argv[3]
 
 async function dumpData (modelData, filterIndices) {
-  await ensureDir(OUTPUT_DIR)
+  await fs.ensureDir(OUTPUT_DIR)
 
   // Write the common index using data from any model
   let commonIndices = filterIndices[0].map(fi => modelData[0].indices[fi])
@@ -26,7 +25,7 @@ async function dumpData (modelData, filterIndices) {
   for (let mIdx = 0; mIdx < modelData.length; mIdx++) {
     // For each model data
     let outputModelDir = path.join(OUTPUT_DIR, modelData[mIdx].name)
-    await ensureDir(outputModelDir)
+    await fs.ensureDir(outputModelDir)
 
     for (let target of fct.meta.targetIds) {
       let targetPath = path.join(outputModelDir, target)
