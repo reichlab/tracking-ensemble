@@ -92,7 +92,7 @@ function getFilterIndices (indices) {
       hhs9: '09',
       hhs10: '10'
     }
-    let indToF = i => `${i[0]}-${fctRegionMap(i[1])}`
+    let indToF = i => `${i[0]}-${fctRegionMap[i[1]]}`
     let fa = indToF(a)
     let fb = indToF(b)
     if (fa === fb) {
