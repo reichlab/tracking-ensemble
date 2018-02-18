@@ -2,7 +2,7 @@ rule setup_node:
     output: "node_modules/flusight-csv-tools"
     shell: "npm install"
 
-rule process_data:
+rule process_ensemble_data:
     input: "data/external/cdc-flusight-ensemble"
     output: dir = "data/processed/cdc-flusight-ensemble",
             index = "data/processed/cdc-flusight-ensemble/index.csv"

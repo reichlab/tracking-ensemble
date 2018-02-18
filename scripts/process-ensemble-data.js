@@ -46,6 +46,8 @@ function processModels (models) {
       try {
         let epiweek = u.getCsvEpiweek(csv)
         let fctCsv = new fct.Csv(csv, epiweek, model.id)
+        data[mIdx].indices = data[mIdx].indices.concat(fct.meta.regionIds.map(r => [epiweek, r]))
+
         for (let target of fct.meta.targetIds) {
           if (data[mIdx].predictions[target] === undefined) {
             data[mIdx].predictions[target] = []
@@ -59,7 +61,6 @@ function processModels (models) {
               probs.splice(probs.length - 1, 0, 0.0)
             }
             data[mIdx].predictions[target].push(probs)
-            data[mIdx].indices.push([epiweek, region])
           }
         }
       } catch (e) {
