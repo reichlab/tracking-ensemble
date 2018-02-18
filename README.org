@@ -3,3 +3,94 @@
 
 This repository explores possible ways to set dynamic ensemble weights in a time
 series prediction setting.
+
+* Table of Contents                                       :TOC_4_gh:noexport:
+- [[#problem][Problem]]
+- [[#data-description][Data description]]
+  - [[#season-and-weeks][Season and weeks]]
+  - [[#component-models][Component models]]
+- [[#models-to-compare][Models to Compare]]
+- [[#evaluation][Evaluation]]
+
+* Problem
+As demonstrated in [[https://github.com/FluSightNetwork/cdc-flusight-ensemble][cdc-flusight-ensemble]] (and various other places), simply
+averaging predictions from component models works as a good ensembling strategy.
+In many earlier works, we work with a constant weight for each model fixed
+throughout the season based on the mean performance. Since data points in time
+series are not independent, it makes sense to try and see how a changing set of
+weights perform.
+
+* Data description
+We use the training data from [[https://github.com/FluSightNetwork/cdc-flusight-ensemble][cdc-flusight-ensemble]] repository following a
+structure similar to the setup in [[https://github.com/reichlab/neural-stack][neural-stack]] with few improvements based on
+standardized notations as described in [[https://github.com/reichlab/flusight-csv-tools][flusight-csv-tools]]. Following description
+assumes the knowledge of these notations.
+
+** Season and weeks
+In total, we have 7 /seasons/ ~[2010, 2016]~ of prediction data. From these, we
+choose first 4 for training, utilizing a leave one season out cross validation
+if models are parametric. The rest 3 are for testing.
+
+A /season/ contains 33 /epiweeks/ ~[20xx40, 20yy20]~ (or ~[20xx40, 20yy19]~, if the
+season has 53 epiweeks).
+
+** Component models
+For each epiweek, a component model provides probability distribution for each
+of the 7 targets. These distributions have different bins depending on the
+target:
+
+- ~x-ahead~ and ~peak~ targets have 131 bins specifying probabilities for /wili/
+  values. The bins are [0.0, 0.1), [0.1, 0.2), ... [12.9, 13.0) [13.0, 100]
+- ~onset-wk~ has 35 bins. First 34 specify the probabilities for bins [20xx40,
+  20xx41), ... [20yy20, 20yy21) (the last bin is [20yy21, 20yy22) with 0.0
+  probability if there are 52 weeks in that season). The 35th bin is the
+  probability of /no onset/.
+- ~peak-wk~ has similar bins as that of onset-wk but with no 35th bin (since there
+  is no situation with /no peak/).
+
+There are 22 component models in total.
+
+* Models to Compare
+An ensemble model which works on probability distribution has many ways to
+operate. A few examples (not a definitive list) of such possible operators on
+probability distributions are:
+
+1. /Weighted averaging/ ~[Dist] -> [Weight] -> Dist~. This returns a convex
+   combination of n distributions.
+2. /Translation/ ~Dist -> Shift -> Dist~. This takes a probability distribution and
+   shifts it certain number of steps (useful for fixing component biases).
+3. /Smoothing/ ~Dist -> Params -> Dist~. This smooths the distributions if they are
+   generated from (say) a neural network with discrete output nodes without any
+   sense of smoothness.
+4. /Truncation/Masking/ ~Dist -> Params -> Dist~
+5. Other higher order operators and general purpose tweeners.
+
+The idea behind stating and using such operators is to have interpretable output
+from the ensemble. As of now, we are only interested in models which provide
+different ways to do /weighted averaging/ (the first operator).
+
+In the ideal case, at each time step (epiweek), we will have an oracle provide
+the truth to use so we can assign weights to component such that the best
+component (at that week) gets weight 1 and the rest get 0. This theoretic model
+serves as the upper limit in all our experiments in this repository. In between
+this and the fixed-for-whole-season weights, we try to find a model with good
+generalization.
+
+The following are the models to be tried out in this work.
+- [ ] Plain ~degenerate em~ which learns a single of weights.
+- [ ] ~Upper limit hit~ based weighting. A /harder/ than degenerate em scheme where
+  we try to assign weight to models depending on how many times they turn out to
+  be the best predictor.
+- [ ] ~Score based weighing~ scheme for each epiweek. This has one temperature
+  parameter in the softmax function which we will optimize using cross
+  validation.
+- [ ] ~k-partition~ degenerate em. Here we learn optimal k partitions of a season
+  such that the degenerate em method run on each partition provide an overall
+  better performance as compared to being run on the whole season.
+- [ ] ~Multiplicative weights~. A dynamically changing weight assignment scheme
+  depending on live losses received.
+
+* Evaluation
+
+For the preliminary analysis, we will use log score of lag 0 truth as the
+maximization objective.
