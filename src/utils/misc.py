@@ -2,9 +2,10 @@
 Utilities for working with distributions and similar stuff
 """
 
-import pymmwr
+import numpy as np
 import os
 import os.path as path
+import pymmwr
 
 
 def epiweek_to_season(epiweek: int) -> int:
@@ -23,6 +24,11 @@ def epiweek_to_model_week(epiweek: int) -> int:
     20xx19/20xx20
     """
 
+    if np.isnan(epiweek):
+        # We consider this as the sign of no onset and assign the last bin
+        return 34
+
+    epiweek = int(epiweek)
     season = epiweek_to_season(epiweek)
     nweeks = pymmwr.mmwr_weeks_in_year(season)
 

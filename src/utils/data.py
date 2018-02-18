@@ -8,6 +8,7 @@ import os
 import os.path as path
 import pymmwr
 from typing import List, Tuple
+from utils.misc import epiweek_to_model_week
 
 
 Index = pd.DataFrame
@@ -117,4 +118,9 @@ class ActualData:
         target_column = f"{target_name}-{'latest' if latest else 'first'}"
         index = self._df[["epiweek", "region"]]
         data = self._df[target_column].values
+
+        if target_name in ["peak-wk", "onset-wk"]:
+            # We use a general model week specification
+            data = np.array([epiweek_to_model_week(ew) for ew in data])
+
         return _narrow_selection(index, data, region_name, season)
