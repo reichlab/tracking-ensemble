@@ -55,6 +55,8 @@ function processModels (models) {
           for (let region of fct.meta.regionIds) {
             let probs = fctCsv.getBins(target, region).map(b => b[2])
             // Take 34 bins for peak-wk and 35 for onset-wk irrespective of season
+            // Note that this is different from the way we load files in python, where
+            // we skip the last file. I don't know why I have decided to make it this way.
             if ((target === 'peak-wk') && (probs.length === 33)) {
               probs.push(0.0)
             } else if ((target === 'onset-wk') && (probs.length === 34)) {
