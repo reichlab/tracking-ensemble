@@ -48,8 +48,8 @@ class Model {
   get csvs () {
     return fs.readdirSync(this.dir)
       .filter(it => it.endsWith('csv'))
+      .sort((a, b) => getCsvEpiweek(a) - getCsvEpiweek(b))
       .map(fileName => path.join(this.dir, fileName))
-      .sort()
   }
 
   getCsvFor (epiweek) {

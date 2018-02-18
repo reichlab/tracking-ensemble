@@ -78,8 +78,21 @@ function processModels (models) {
  */
 function getFilterIndices (indices) {
   let comparator = (a, b) => {
-    // Revert the items to original file name ordering
-    let indToF = i => `${(i[0] + '').slice(4)}-${Math.floor(i[0] / 100)}-${i[1]}`
+    // Preserve ordering of regions from fct
+    let fctRegionMap = {
+      nat: '00',
+      hhs1: '01',
+      hhs2: '02',
+      hhs3: '03',
+      hhs4: '04',
+      hhs5: '05',
+      hhs6: '06',
+      hhs7: '07',
+      hhs8: '08',
+      hhs9: '09',
+      hhs10: '10'
+    }
+    let indToF = i => `${i[0]}-${fctRegionMap(i[1])}`
     let fa = indToF(a)
     let fb = indToF(b)
     if (fa === fb) {
