@@ -7,7 +7,12 @@ from collections import Counter
 from typing import List, Tuple
 import json
 import utils.dists as udists
+import utils.misc as u
 import numpy as np
+import pandas as pd
+
+
+EPSILON = np.sqrt(np.finfo(float).eps)
 
 
 def beta_softmax(vector, beta):
@@ -39,7 +44,7 @@ def dem(mat, weights=None, epsilon=None):
         weights = np.ones(mat.shape[1]) / mat.shape[1]
 
     if not epsilon:
-        epsilon = np.sqrt(np.finfo(float).eps)
+        epsilon = EPSILON
 
     w_mat = mat * weights
     marginals = np.sum(w_mat, axis=1)
@@ -280,7 +285,76 @@ class HitWeightEnsemble(Model):
 
 
 class ScoreWeightEnsemble(Model):
-    pass
+    """
+    Ensemble that weighs components according to the scores they get for each model week.
+    """
+
+    def __init__(self, target: str, n_comps: int, beta: float):
+        """
+        Parameters
+        ----------
+        target : str
+            Target identifier
+        n_comps : int
+            Number of components
+        beta : float
+            Beta for the softmax
+        """
+
+        self.target = target
+        self.n_comps = n_comps
+        self.beta = beta
+
+    def train(self, index_vec, component_predictions_vec, truth_vec):
+        """
+        Group the scores according to model weeks
+        """
+
+        model_weeks = index_vec["epiweek"].map(u.epiweek_to_model_week)
+        probabilities = udists.prediction_probabilities(component_predictions_vec, truth_vec, self.target)
+
+        dfdict = { "model_weeks": model_weeks }
+        for i in range(self.n_comps):
+            dfdict[i] = probabilities[:, i]
+
+        # Mean probabilities per model week
+        mean_probabilities = pd.DataFrame(dfdict).groupby("model_weeks").mean()
+        self.model_weeks = list(mean_probabilities.index)
+
+        # beta softmax simplifies since log and exp cancel
+        probs = mean_probabilities.values
+        probs **= self.beta
+        self.weights = probs / probs.sum(axis=1)[:, None]
+
+    def predict(self, index, component_predictions):
+        """
+        Use the truth to identify the best component. Then output its
+        prediction
+        """
+
+        model_week = u.epiweek_to_model_week(index["epiweek"])
+        weights = self.weights[self.model_weeks.index(model_week)]
+
+        return udists.weighted_ensemble(component_predictions, weights)
+
+    def feedback(self, component_losses):
+        pass
+
+    def save(self, file_name):
+        with open(file_name, "w") as fp:
+            data = {
+                "weights": self.weights.tolist(),
+                "beta": self.beta,
+                "model_weeks": self.model_weeks
+            }
+            json.dump(data, fp)
+
+    def load(self, file_name):
+        with open(file_name) as fp:
+            data = json.load(fp)
+            self.weights = np.array(data["weights"])
+            self.beta = data["beta"]
+            self.model_weeks = pd.Index(data["model_weeks"])
 
 
 class KDemWeightEnsemble(Model):
