@@ -77,11 +77,11 @@ this and the fixed-for-whole-season weights, we try to find a model with good
 generalization.
 
 The following are the models to be tried out in this work.
-- [ ] Plain ~degenerate em~ which learns a single of weights.
-- [ ] ~Upper limit hit~ based weighting. A /harder/ than degenerate em scheme where
+- [X] Plain ~degenerate em~ which learns a single of weights.
+- [X] ~Upper limit hit~ based weighting. A /harder/ than degenerate em scheme where
   we try to assign weight to models depending on how many times they turn out to
   be the best predictor.
-- [ ] ~Score based weighing~ scheme for each epiweek. This has one temperature
+- [X] ~Score based weighing~ scheme for each epiweek. This has one temperature
   parameter in the softmax function which we will optimize using cross
   validation.
 - [ ] ~k-partition~ degenerate em. Here we learn optimal k partitions of a season
@@ -92,5 +92,5 @@ The following are the models to be tried out in this work.
 
 * Evaluation
 
-For the preliminary analysis, we will use log score of lag 0 truth as the
+For the preliminary analysis, we will use log score of latest truth as the
 maximization objective.
