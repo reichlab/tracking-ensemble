@@ -2,6 +2,8 @@
 Models
 """
 
+from abc import ABC, abstractmethod
+from typing import List, Tuple
 import numpy as np
 
 
@@ -47,3 +49,58 @@ def dem(mat, weights=None, epsilon=None):
             if (marginal_diff <= epsilon) or ((marginal_diff / -log_marginal) <= epsilon):
                 break
     return weights
+
+
+class Model(ABC):
+    """
+    A general time series model. Training is batched while prediction is not.
+    There is also a feedback method to patch things up.
+    """
+
+    @abstractmethod
+    def train(self):
+        ...
+
+    @abstractmethod
+    def predict(self):
+        ...
+
+    @abstractmethod
+    def feedback(self):
+        ...
+
+    @abstractmethod
+    def save(self):
+        ...
+
+    @abstractmethod
+    def load(self):
+        ...
+
+
+class OracleEnsemble(Model):
+    pass
+
+
+class MeanEnsemble(Model):
+    pass
+
+
+class DemWeightEnsemble(Model):
+    pass
+
+
+class HitWeightEnsemble(Model):
+    pass
+
+
+class ScoreWeightEnsemble(Model):
+    pass
+
+
+class KDemWeightEnsemble(Model):
+    pass
+
+
+class MPWeightEnsemble(Model):
+    pass
