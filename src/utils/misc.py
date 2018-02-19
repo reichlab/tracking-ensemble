@@ -6,6 +6,7 @@ import numpy as np
 import os
 import os.path as path
 import pymmwr
+import warnings
 
 
 def epiweek_to_season(epiweek: int) -> int:
@@ -36,6 +37,9 @@ def epiweek_to_model_week(epiweek: int) -> int:
     if week >= 40 and week <= nweeks:
         return epiweek - ((season * 100) + 40)
     elif (nweeks == 52 and week <= 21) or (nweeks == 53 and week <= 20):
+        return week + (nweeks - 40)
+    elif week >= 20:
+        warnings.warn(f"Epiweek {epiweek} is greater than the models' range")
         return week + (nweeks - 40)
     else:
         raise Exception(f"Epiweek {epiweek} outside the desired range")
