@@ -55,5 +55,4 @@ def prediction_probabilities(Xs: List[np.ndarray], y: np.ndarray, target: str) -
     Return score matrix for the predictions
     """
 
-
     return np.stack([np.multiply(actual_to_one_hot(y, target), X).sum(axis=1) for X in Xs], axis=1)

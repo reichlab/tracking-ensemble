@@ -4,6 +4,7 @@ Models
 
 from abc import ABC, abstractmethod
 from typing import List, Tuple
+import json
 import utils.dists as udists
 import numpy as np
 
@@ -177,7 +178,40 @@ class MeanEnsemble(Model):
 
 
 class DemWeightEnsemble(Model):
-    pass
+    """
+    Degenerate EM ensemble.
+    """
+
+    def __init__(self, target: str, n_comps: int):
+        self.target = target
+        self.n_comps = n_comps
+
+    def train(self, index_vec, component_predictions_vec, truth_vec):
+        """
+        Use degenerate EM to find the best set of weights optimizing the log scores
+        """
+
+        probabilities = udists.prediction_probabilities(component_predictions_vec, truth_vec, self.target)
+        self.weights = dem(probabilities)
+
+    def predict(self, index, component_predictions):
+        """
+        Use the truth to identify the best component. Then output its
+        prediction
+        """
+
+        return udists.weighted_ensemble(component_predictions, self.weights)
+
+    def feedback(self, component_losses):
+        pass
+
+    def save(self, file_name):
+        with open(file_name, "w") as fp:
+            json.dump({ "weights": self.weights }, fp)
+
+    def load(self, file_name):
+        with open(file_name) as fp:
+            self.weights = json.load(fp)["weights"]
 
 
 class HitWeightEnsemble(Model):
