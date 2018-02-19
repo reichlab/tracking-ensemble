@@ -18,7 +18,7 @@ EPSILON = np.sqrt(np.finfo(float).eps)
 
 def beta_softmax(vector, beta):
     """
-    Calculate softmax with a beta (inverse parameter)
+    Calculate softmax with a beta (inverse temperature parameter)
     """
 
     expv = np.exp(beta * vector)
@@ -72,8 +72,27 @@ def dem(mat, weights=None, epsilon=None):
 class Model(ABC):
     """
     A general time series model. Training is batched while prediction is not.
-    There is also a feedback method to patch things up.
     """
+
+    @property
+    def params(self):
+        return {
+            "target": self.target,
+            "n_comps": self.n_comps
+        }
+
+    @params.setter
+    def params(self, ps):
+        self.target = ps["target"]
+        self.n_comps = ps["n_comps"]
+
+    @property
+    def fit_params(self):
+        return {}
+
+    @fit_params.setter
+    def fit_params(self, fps):
+        pass
 
     @abstractmethod
     def train(self, index_vec, component_predictions_vec, truth_vec):
@@ -108,30 +127,50 @@ class Model(ABC):
         """
         ...
 
-    @abstractmethod
     def feedback(self, last_truth):
         """
         Take feedback in the form of last truth. This can then be used for updating the
         weights.
         """
-        ...
 
-    @abstractmethod
-    def save(self, file_path: str):
-        """
-        Save model parameters to the file given
-        """
-        ...
-
-    @abstractmethod
-    def load(self, file_path: str):
-        """
-        Load model parameters from the file given
-        """
-        ...
+        raise NotImplementedError("feedback not available in this model")
 
 
-class OracleEnsemble(Model):
+class SerializerMixin:
+    """
+    Mixin for serializing and deserializing a model
+    """
+
+    def save(self, file_name, with_state=False):
+        """
+        Save model data in given file. Optionally save state too.
+        """
+
+        with open(file_name, "w") as fp:
+            data = {
+                "params": self.params,
+                "fit_params": self.fit_params
+            }
+
+            if with_state:
+                data["state"] = self.state
+            json.dump(data, fp)
+
+    def load(self, file_name, with_state=False):
+        """
+        Load model data from given file. Optionally load state too.
+        """
+
+        with open(file_name) as fp:
+            data = json.load(fp)
+
+            self.params = data["params"]
+            self.fit_params = data["fit_params"]
+            if with_state:
+                self.state = data["state"]
+
+
+class OracleEnsemble(SerializerMixin, Model):
     """
     Oracular ensemble. Outputs the prediction from the best model.
     """
@@ -153,17 +192,8 @@ class OracleEnsemble(Model):
         best_model_idx = np.argmax((np.array(component_predictions) * one_hot).sum(axis=1))
         return component_predictions[best_model_idx]
 
-    def feedback(self, component_losses):
-        pass
 
-    def save(self, file_name):
-        pass
-
-    def load(self, file_name):
-        pass
-
-
-class MeanEnsemble(Model):
+class MeanEnsemble(SerializerMixin, Model):
     """
     Mean ensemble. Outputs the mean of predictions from the components.
     """
@@ -183,17 +213,8 @@ class MeanEnsemble(Model):
 
         return udists.mean_ensemble(component_predictions)
 
-    def feedback(self, component_losses):
-        pass
 
-    def save(self, file_name):
-        pass
-
-    def load(self, file_name):
-        pass
-
-
-class DemWeightEnsemble(Model):
+class DemWeightEnsemble(SerializerMixin, Model):
     """
     Degenerate EM ensemble.
     """
@@ -208,7 +229,16 @@ class DemWeightEnsemble(Model):
         """
 
         probabilities = udists.prediction_probabilities(component_predictions_vec, truth_vec, self.target)
-        self.weights = dem(probabilities)
+        self._weights = dem(probabilities)
+
+    @property
+    def fit_params(self):
+        return { "weights": self._weights.tolist(), **super().fit_params }
+
+    @fit_params.setter
+    def fit_params(self, fit_params):
+        super().fit_params = fit_params
+        self._weights = np.array(fit_params["weights"])
 
     def predict(self, index, component_predictions):
         """
@@ -216,21 +246,10 @@ class DemWeightEnsemble(Model):
         prediction
         """
 
-        return udists.weighted_ensemble(component_predictions, self.weights)
-
-    def feedback(self, component_losses):
-        pass
-
-    def save(self, file_name):
-        with open(file_name, "w") as fp:
-            json.dump({ "weights": self.weights }, fp)
-
-    def load(self, file_name):
-        with open(file_name) as fp:
-            self.weights = json.load(fp)["weights"]
+        return udists.weighted_ensemble(component_predictions, self._weights)
 
 
-class HitWeightEnsemble(Model):
+class HitWeightEnsemble(SerializerMixin, Model):
     """
     Ensemble that weighs components according to the number of times they have
     been the best. This is similar to the score weight ensemble but since hits
@@ -252,7 +271,25 @@ class HitWeightEnsemble(Model):
 
         self.target = target
         self.n_comps = n_comps
-        self.beta = beta
+        self._beta = beta
+
+    @property
+    def params(self):
+        return { "beta": self._beta, **super().params }
+
+    @params.setter
+    def params(self, params):
+        super().params = params
+        self._beta = params["beta"]
+
+    @property
+    def fit_params(self):
+        return { "weights": self._weights.tolist(), **super().fit_params }
+
+    @fit_params.setter
+    def fit_params(self, fit_params):
+        super().fit_params = fit_params
+        self._weights = np.array(fit_params["weights"])
 
     def train(self, index_vec, component_predictions_vec, truth_vec):
         """
@@ -261,7 +298,7 @@ class HitWeightEnsemble(Model):
 
         probabilities = udists.prediction_probabilities(component_predictions_vec, truth_vec, self.target)
         hits = Counter(np.argmax(probabilities, axis=1))
-        self.weights = beta_softmax([hits[i] for i in range(self.n_comps)], self.beta)
+        self._weights = beta_softmax([hits[i] for i in range(self.n_comps)], self._beta)
 
     def predict(self, index, component_predictions):
         """
@@ -269,23 +306,10 @@ class HitWeightEnsemble(Model):
         prediction
         """
 
-        return udists.weighted_ensemble(component_predictions, self.weights)
-
-    def feedback(self, component_losses):
-        pass
-
-    def save(self, file_name):
-        with open(file_name, "w") as fp:
-            json.dump({ "weights": self.weights, "beta": self.beta }, fp)
-
-    def load(self, file_name):
-        with open(file_name) as fp:
-            data = json.load(fp)
-            self.weights = data["weights"]
-            self.beta = data["beta"]
+        return udists.weighted_ensemble(component_predictions, self._weights)
 
 
-class ScoreWeightEnsemble(Model):
+class ScoreWeightEnsemble(SerializerMixin, Model):
     """
     Ensemble that weighs components according to the scores they get for each model week.
     """
@@ -304,7 +328,30 @@ class ScoreWeightEnsemble(Model):
 
         self.target = target
         self.n_comps = n_comps
-        self.beta = beta
+        self._beta = beta
+
+    @property
+    def params(self):
+        return { "beta": self._beta, **super().params }
+
+    @params.setter
+    def params(self, params):
+        super().params = params
+        self._beta = params["beta"]
+
+    @property
+    def fit_params(self):
+        return {
+            "weights": self._weights.tolist(),
+            "model_weeks": self._model_weeks,
+            **super().fit_params
+        }
+
+    @fit_params.setter
+    def fit_params(self, fit_params):
+        super().fit_params = fit_params
+        self._weights = np.array(fit_params["weights"])
+        self._model_weeks = np.array(fit_params["model_weeks"])
 
     def train(self, index_vec, component_predictions_vec, truth_vec):
         """
@@ -320,12 +367,12 @@ class ScoreWeightEnsemble(Model):
 
         # Mean probabilities per model week
         mean_probabilities = pd.DataFrame(dfdict).groupby("model_weeks").mean()
-        self.model_weeks = list(mean_probabilities.index)
+        self._model_weeks = list(mean_probabilities.index)
 
         # beta softmax simplifies since log and exp cancel
         probs = mean_probabilities.values
-        probs **= self.beta
-        self.weights = probs / probs.sum(axis=1)[:, None]
+        probs **= self._beta
+        self._weights = probs / probs.sum(axis=1)[:, None]
 
     def predict(self, index, component_predictions):
         """
@@ -334,39 +381,43 @@ class ScoreWeightEnsemble(Model):
         """
 
         model_week = u.epiweek_to_model_week(index["epiweek"])
-        weights = self.weights[self.model_weeks.index(model_week)]
+        weights = self._weights[self._model_weeks.index(model_week)]
 
         return udists.weighted_ensemble(component_predictions, weights)
 
-    def feedback(self, component_losses):
-        pass
 
-    def save(self, file_name):
-        with open(file_name, "w") as fp:
-            data = {
-                "weights": self.weights.tolist(),
-                "beta": self.beta,
-                "model_weeks": self.model_weeks
-            }
-            json.dump(data, fp)
-
-    def load(self, file_name):
-        with open(file_name) as fp:
-            data = json.load(fp)
-            self.weights = np.array(data["weights"])
-            self.beta = data["beta"]
-            self.model_weeks = pd.Index(data["model_weeks"])
-
-
-class KDemWeightEnsemble(Model):
+class KDemWeightEnsemble(SerializerMixin, Model):
     """
-    Degenerate EM ensemble trained on optimal k parition of epiweeks.
+    Degenerate EM ensemble trained on optimal k partition of epiweeks.
     """
 
     def __init__(self, target: str, n_comps: int, k: int):
         self.target = target
         self.n_comps = n_comps
-        self.k = k
+        self._k = k
+
+    @property
+    def params(self):
+        return { "k": self._k, **super().params }
+
+    @params.setter
+    def params(self, params):
+        super().params = params
+        self._k = params["k"]
+
+    @property
+    def fit_params(self):
+        return {
+            "partition_lengths": self._partition_lengths,
+            "partition_weights": np.array(self._partition_weights).tolist(),
+            **super().fit_params
+        }
+
+    @fit_params.setter
+    def fit_params(self, fit_params):
+        super().fit_params = fit_params
+        self._partition_lengths = fit_params["partition_lengths"]
+        self._partition_weights = np.array(fit_params["partition_weights"])
 
     @lru_cache(None)
     def _score_partition(self, start_wk, length):
@@ -377,10 +428,10 @@ class KDemWeightEnsemble(Model):
 
         # Model weeks in the partition
         weeks = list(range(start_wk, start_wk + length))
-        selection = self.index.isin(weeks)
+        selection = self._model_week_index.isin(weeks)
 
-        weights = dem(self.probabilities[selection])
-        score = (self.probabilities[selection] * weights).sum(axis=1).mean()
+        weights = dem(self._probabilities[selection])
+        score = (self._probabilities[selection] * weights).sum(axis=1).mean()
 
         return np.log(score), weights
 
@@ -392,45 +443,42 @@ class KDemWeightEnsemble(Model):
 
         if k == 1:
             # We work on the complete remaining chunk
-            length = self.data["nweeks"] - start_wk
+            length = self._nweeks - start_wk
             score, weights = self._score_partition(start_wk, length)
             return score, [length], [weights]
 
         optimal_score = -np.inf
-        optimal_partitions = []
+        optimal_lengths = []
         optimal_weights = []
 
-        for length in range(1, self.data["nweeks"] - (k - 1) - start_wk):
+        for length in range(1, self._nweeks - (k - 1) - start_wk):
             score, weights = self._score_partition(start_wk, length)
-            rest_score, rest_partitions, rest_weights = self._partition(start_wk + length, k - 1)
+            rest_score, rest_lengths, rest_weights = self._partition(start_wk + length, k - 1)
 
             # Find the mean of scores
-            rest_length = self.data["nweeks"] - start_wk - length
+            rest_length = self._nweeks - start_wk - length
             total_score = ((score * length) + (rest_score * rest_length)) / (length + rest_length)
 
             if total_score > optimal_score:
                 optimal_score = total_score
-                optimal_partitions = [length, *rest_partitions]
+                optimal_lengths = [length, *rest_lengths]
                 optimal_weights = [weights, *rest_weights]
 
-        return optimal_score, optimal_partitions, optimal_weights
+        return optimal_score, optimal_lengths, optimal_weights
 
     def train(self, index_vec, component_predictions_vec, truth_vec):
         """
-        Use degenerate EM to find the best set of weights optimizing the log scores
+        Use degenerate EM to find the best set of weights optimizing the log scores.
+        Assume model weeks is a sequence from 0 to nweeks - 1 with no gaps or other stuff
         """
 
-        self.probabilities = udists.prediction_probabilities(component_predictions_vec, truth_vec, self.target)
-        self.index = index_vec["epiweek"].map(u.epiweek_to_model_week)
+        self._probabilities = udists.prediction_probabilities(component_predictions_vec, truth_vec, self.target)
+        self._model_week_index = index_vec["epiweek"].map(u.epiweek_to_model_week)
 
-        score, partitions, weights = self._partition(0, self.k)
-        self.data {
-            "partitions": partitions,
-            "weights": weights,
-            "nweeks": len(np.unique(self.index))
-        }
+        self._nweeks = len(np.unique(self._model_week_index))
+        score, self._partition_lengths, self._partition_weights = self._partition(0, self._k)
 
-        print(f"Training complete for {self.k} partitions, best score {score}")
+        print(f"Training complete for {self._k} partitions, best score {score}")
 
     def predict(self, index, component_predictions):
         """
@@ -439,35 +487,11 @@ class KDemWeightEnsemble(Model):
         """
 
         model_week = u.epiweek_to_model_week(index["epiweek"])
-        c_partitions = np.cumsum(self.data["partitions"])
-        partition_idx = np.sum(np.cumsum(c_partitions) <= model_week)
-        weights = self.data["weights"][partition_idx]
+        partitions = np.cumsum(self._partition_lengths)
+        partition_idx = np.sum(np.cumsum(partitions) <= model_week)
+        weights = self._partition_weights[partition_idx]
 
         return udists.weighted_ensemble(component_predictions, weights)
-
-    def feedback(self, component_losses):
-        pass
-
-    def save(self, file_name):
-        with open(file_name, "w") as fp:
-            data = {
-                "k": self.k,
-                "partitions": self.data["partitions"],
-                "weights": [w.tolist() for w in self.data["weights"]],
-                "nweeks": self.data["nweeks"]
-            }
-            json.dump({ "weights": self.weights }, fp)
-
-    def load(self, file_name):
-        with open(file_name) as fp:
-            data = json.load(fp)
-            self.weights = data["weights"]
-            self.k = data["k"]
-            self.data = {
-                "nweeks": data["nweeks"],
-                "weights": data["weights"],
-                "partitions": data["partitions"]
-            }
 
 
 class MPWeightEnsemble(Model):
