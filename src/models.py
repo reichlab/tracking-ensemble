@@ -3,10 +3,20 @@ Models
 """
 
 from abc import ABC, abstractmethod
+from collections import Counter
 from typing import List, Tuple
 import json
 import utils.dists as udists
 import numpy as np
+
+
+def beta_softmax(vector, beta):
+    """
+    Calculate softmax with a beta (inverse parameter)
+    """
+
+    expv = np.exp(beta * vector)
+    return expv / np.sum(expv)
 
 
 def dem(mat, weights=None, epsilon=None):
@@ -215,7 +225,58 @@ class DemWeightEnsemble(Model):
 
 
 class HitWeightEnsemble(Model):
-    pass
+    """
+    Ensemble that weighs components according to the number of times they have
+    been the best. This is similar to the score weight ensemble but since hits
+    are relatively sparse (by definition), we make this a whole training data
+    thing as compared to the score weight model which is per week.
+    """
+
+    def __init__(self, target: str, n_comps: int, beta: float):
+        """
+        Parameters
+        ----------
+        target : str
+            Target identifier
+        n_comps : int
+            Number of components
+        beta : float
+            Beta for the softmax
+        """
+
+        self.target = target
+        self.n_comps = n_comps
+        self.beta = beta
+
+    def train(self, index_vec, component_predictions_vec, truth_vec):
+        """
+        Count the number of best hits and pass through the softmax to get weights
+        """
+
+        probabilities = udists.prediction_probabilities(component_predictions_vec, truth_vec, self.target)
+        hits = Counter(np.argmax(probabilities, axis=1))
+        self.weights = beta_softmax([hits[i] for i in range(self.n_comps)], self.beta)
+
+    def predict(self, index, component_predictions):
+        """
+        Use the truth to identify the best component. Then output its
+        prediction
+        """
+
+        return udists.weighted_ensemble(component_predictions, self.weights)
+
+    def feedback(self, component_losses):
+        pass
+
+    def save(self, file_name):
+        with open(file_name, "w") as fp:
+            json.dump({ "weights": self.weights, "beta": self.beta }, fp)
+
+    def load(self, file_name):
+        with open(file_name) as fp:
+            data = json.load(fp)
+            self.weights = data["weights"]
+            self.beta = data["beta"]
 
 
 class ScoreWeightEnsemble(Model):
