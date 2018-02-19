@@ -4,6 +4,7 @@ Models
 
 from abc import ABC, abstractmethod
 from typing import List, Tuple
+from utils.dists import actual_to_one_hot
 import numpy as np
 
 
@@ -114,7 +115,36 @@ class Model(ABC):
 
 
 class OracleEnsemble(Model):
-    pass
+    """
+    Oracular ensemble. Outputs the prediction from the best model.
+    """
+
+    def __init__(self, target: str, n_comps: int):
+        self.target = target
+        self.n_comps = n_comps
+
+    def train(self, index_vec, component_predictions_vec, truth_vec):
+        pass
+
+    def predict(self, index, component_predictions, truth):
+        """
+        Use the truth to identify the best component. Then output its
+        prediction
+        """
+
+        one_hot = actual_to_one_hot(np.array([truth]), self.target)
+        best_model_idx = np.argmax((np.array(component_predictions) * one_hot).sum(axis=1))
+        return component_predictions[best_model_idx]
+
+
+    def feedback(self, component_losses):
+        pass
+
+    def save(self, file_name):
+        pass
+
+    def load(self, file_name):
+        pass
 
 
 class MeanEnsemble(Model):
