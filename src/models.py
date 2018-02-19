@@ -58,23 +58,58 @@ class Model(ABC):
     """
 
     @abstractmethod
-    def train(self):
+    def train(self, index_vec, component_predictions_vec, truth_vec):
+        """
+        Train the model
+
+        Parameters
+        ----------
+        index_vec : pd.DataFrame
+            Dataframe with atleast two columns "epiweek" and "region".
+            Shape is (n_instances, 2).
+        component_predictions_vec : List[np.ndarray]
+            One matrix for each component. Matrix is (n_instances, n_bins).
+        truth_vec : np.ndarray
+            True values. Shape (n_instances, )
+        """
         ...
 
     @abstractmethod
-    def predict(self):
+    def predict(self, index, component_predictions, truth=None):
+        """
+        Predict output for a single timepoint
+
+        Parameters
+        ----------
+        index : List/Tuple
+            Pair of epiweek and region values
+        component_predictions : List[np.ndarray]
+            One vector for each component. Vector is of shape (n_bins, )
+        truth
+            True value for the time point. This is only used by oracular models.
+        """
         ...
 
     @abstractmethod
-    def feedback(self):
+    def feedback(self, last_truth):
+        """
+        Take feedback in the form of last truth. This can then be used for updating the
+        weights.
+        """
         ...
 
     @abstractmethod
-    def save(self):
+    def save(self, file_path: str):
+        """
+        Save model parameters to the file given
+        """
         ...
 
     @abstractmethod
-    def load(self):
+    def load(self, file_path: str):
+        """
+        Load model parameters from the file given
+        """
         ...
 
 
