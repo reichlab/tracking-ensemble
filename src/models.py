@@ -4,6 +4,7 @@ Models
 
 from abc import ABC, abstractmethod
 from collections import Counter
+from functools import lru_cache
 from typing import List, Tuple
 import json
 import utils.dists as udists
@@ -358,7 +359,115 @@ class ScoreWeightEnsemble(Model):
 
 
 class KDemWeightEnsemble(Model):
-    pass
+    """
+    Degenerate EM ensemble trained on optimal k parition of epiweeks.
+    """
+
+    def __init__(self, target: str, n_comps: int, k: int):
+        self.target = target
+        self.n_comps = n_comps
+        self.k = k
+
+    @lru_cache(None)
+    def _score_partition(self, start_wk, length):
+        """
+        For a partition specified by start_wk and length, fit weights
+        and find score
+        """
+
+        # Model weeks in the partition
+        weeks = list(range(start_wk, start_wk + length))
+        selection = self.index.isin(weeks)
+
+        weights = dem(self.probabilities[selection])
+        score = (self.probabilities[selection] * weights).sum(axis=1).mean()
+
+        return np.log(score), weights
+
+    @lru_cache(None)
+    def _partition(self, start_wk, k):
+        """
+        Find optimal number of partitions
+        """
+
+        if k == 1:
+            # We work on the complete remaining chunk
+            length = self.data["nweeks"] - start_wk
+            score, weights = self._score_partition(start_wk, length)
+            return score, [length], [weights]
+
+        optimal_score = -np.inf
+        optimal_partitions = []
+        optimal_weights = []
+
+        for length in range(1, self.data["nweeks"] - (k - 1) - start_wk):
+            score, weights = self._score_partition(start_wk, length)
+            rest_score, rest_partitions, rest_weights = self._partition(start_wk + length, k - 1)
+
+            # Find the mean of scores
+            rest_length = self.data["nweeks"] - start_wk - length
+            total_score = ((score * length) + (rest_score * rest_length)) / (length + rest_length)
+
+            if total_score > optimal_score:
+                optimal_score = total_score
+                optimal_partitions = [length, *rest_partitions]
+                optimal_weights = [weights, *rest_weights]
+
+        return optimal_score, optimal_partitions, optimal_weights
+
+    def train(self, index_vec, component_predictions_vec, truth_vec):
+        """
+        Use degenerate EM to find the best set of weights optimizing the log scores
+        """
+
+        self.probabilities = udists.prediction_probabilities(component_predictions_vec, truth_vec, self.target)
+        self.index = index_vec["epiweek"].map(u.epiweek_to_model_week)
+
+        score, partitions, weights = self._partition(0, self.k)
+        self.data {
+            "partitions": partitions,
+            "weights": weights,
+            "nweeks": len(np.unique(self.index))
+        }
+
+        print(f"Training complete for {self.k} partitions, best score {score}")
+
+    def predict(self, index, component_predictions):
+        """
+        Use the truth to identify the best component. Then output its
+        prediction
+        """
+
+        model_week = u.epiweek_to_model_week(index["epiweek"])
+        c_partitions = np.cumsum(self.data["partitions"])
+        partition_idx = np.sum(np.cumsum(c_partitions) <= model_week)
+        weights = self.data["weights"][partition_idx]
+
+        return udists.weighted_ensemble(component_predictions, weights)
+
+    def feedback(self, component_losses):
+        pass
+
+    def save(self, file_name):
+        with open(file_name, "w") as fp:
+            data = {
+                "k": self.k,
+                "partitions": self.data["partitions"],
+                "weights": [w.tolist() for w in self.data["weights"]],
+                "nweeks": self.data["nweeks"]
+            }
+            json.dump({ "weights": self.weights }, fp)
+
+    def load(self, file_name):
+        with open(file_name) as fp:
+            data = json.load(fp)
+            self.weights = data["weights"]
+            self.k = data["k"]
+            self.data = {
+                "nweeks": data["nweeks"],
+                "weights": data["weights"],
+                "partitions": data["partitions"]
+            }
 
 
 class MPWeightEnsemble(Model):
