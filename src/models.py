@@ -494,5 +494,67 @@ class KDemWeightEnsemble(SerializerMixin, Model):
         return udists.weighted_ensemble(component_predictions, weights)
 
 
-class MPWeightEnsemble(Model):
-    pass
+class MPWeightEnsemble(SerializerMixin, Model):
+    """
+    Simple multiplicative weighing algorithm (hedge).
+    """
+
+    def __init__(self, target: str, n_comps: int, eta: int):
+        self.target = target
+        self.n_comps = n_comps
+        self._eta = eta
+
+    @property
+    def params(self):
+        return { "eta": self._eta, **super().params }
+
+    @params.setter
+    def params(self, params):
+        super().params = params
+        self._eta = params["eta"]
+
+    @property
+    def fit_params(self):
+        return {
+            **super().fit_params
+        }
+
+    @fit_params.setter
+    def fit_params(self, fit_params):
+        super().fit_params = fit_params
+
+    @property
+    def state(self):
+        return {
+            "past_predictions": self._past_predictions,
+            "past_gains": self._past_gains,
+            "weights": self._weights
+        }
+
+    @state.setter
+    def state(self, state):
+        self._weights = state["weights"]
+        self._past_gains = state["past_gains"]
+        self._past_predictions = state["past_predictions"]
+
+    def train(self, index_vec, component_predictions_vec, truth_vec):
+        self._weights = np.ones((self.n_comps,))
+        self._past_predictions = []
+        self._past_gains = []
+
+    def predict(self, index, component_predictions):
+        """
+        Return prediction using current weights
+        """
+
+        self._past_predictions.append(component_predictions)
+        return udists.weighted_ensemble(component_predictions, self._weights / np.sum(self._weights))
+
+    def feedback(self, last_truth):
+        """
+        Use the truth from the last timepoint to update weights
+        """
+
+        last_probabilities = udists.prediction_probabilities(self._past_predictions[-1], np.array([last_truth]), self.target)[0]
+        self._past_gains.append(last_probabilities)
+        self._weights *= last_probabilities ** self._eta
