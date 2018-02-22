@@ -514,16 +514,6 @@ class MPWeightEnsemble(SerializerMixin, Model):
         self._eta = params["eta"]
 
     @property
-    def fit_params(self):
-        return {
-            **super().fit_params
-        }
-
-    @fit_params.setter
-    def fit_params(self, fit_params):
-        super().fit_params = fit_params
-
-    @property
     def state(self):
         return {
             "past_predictions": self._past_predictions,
