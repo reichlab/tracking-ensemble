@@ -230,6 +230,7 @@ class DemWeightEnsemble(SerializerMixin, Model):
 
         probabilities = udists.prediction_probabilities(component_predictions_vec, truth_vec, self.target)
         self._weights = dem(probabilities)
+        score = np.log((probabilities * self._weights).sum(axis=1)).mean()
 
     @property
     def fit_params(self):
@@ -431,9 +432,9 @@ class KDemWeightEnsemble(SerializerMixin, Model):
         selection = self._model_week_index.isin(weeks)
 
         weights = dem(self._probabilities[selection])
-        score = (self._probabilities[selection] * weights).sum(axis=1).mean()
+        score = np.log((self._probabilities[selection] * weights).sum(axis=1)).mean()
 
-        return np.log(score), weights
+        return score, weights
 
     @lru_cache(None)
     def _partition(self, start_wk, k):
@@ -451,13 +452,13 @@ class KDemWeightEnsemble(SerializerMixin, Model):
         optimal_lengths = []
         optimal_weights = []
 
-        for length in range(1, self._nweeks - (k - 1) - start_wk):
+        for length in range(1, (self._nweeks - start_wk) - (k - 1)):
             score, weights = self._score_partition(start_wk, length)
             rest_score, rest_lengths, rest_weights = self._partition(start_wk + length, k - 1)
 
             # Find the mean of scores
-            rest_length = self._nweeks - start_wk - length
-            total_score = ((score * length) + (rest_score * rest_length)) / (length + rest_length)
+            remaining_length = self._nweeks - start_wk - length
+            total_score = ((score * length) + (rest_score * remaining_length)) / (length + remaining_length)
 
             if total_score > optimal_score:
                 optimal_score = total_score
