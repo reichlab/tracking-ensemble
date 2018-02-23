@@ -7,6 +7,7 @@ import pandas as pd
 import os
 import os.path as path
 import pymmwr
+from functools import lru_cache
 from typing import List, Tuple
 from utils.misc import epiweek_to_model_week
 
@@ -72,6 +73,7 @@ class Component:
         self.model_path = path.join(exp_dir, name)
         self.index = pd.read_csv(path.join(exp_dir, "index.csv"))
 
+    @lru_cache(None)
     def get(self, target_name: str, region_name=None, season=None) -> Tuple[Index, Data]:
         """
         Return data for asked target_name along with index
