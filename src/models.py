@@ -298,7 +298,7 @@ class HitWeightEnsemble(SerializerMixin, Model):
 
         probabilities = udists.prediction_probabilities(component_predictions_vec, truth_vec, self.target)
         hits = Counter(np.argmax(probabilities, axis=1))
-        self._weights = beta_softmax([hits[i] for i in range(self.n_comps)], self._beta)
+        self._weights = beta_softmax(np.array([hits[i] for i in range(self.n_comps)]), self._beta)
 
     def predict(self, index, component_predictions):
         """
@@ -472,13 +472,14 @@ class KDemWeightEnsemble(SerializerMixin, Model):
         Assume model weeks is a sequence from 0 to nweeks - 1 with no gaps or other stuff
         """
 
+        self._partition.cache_clear()
+        self._score_partition.cache_clear()
+
         self._probabilities = udists.prediction_probabilities(component_predictions_vec, truth_vec, self.target)
         self._model_week_index = index_vec["epiweek"].map(u.epiweek_to_model_week)
 
         self._nweeks = len(np.unique(self._model_week_index))
         score, self._partition_lengths, self._partition_weights = self._partition(0, self._k)
-
-        print(f"Training complete for {self._k} partitions, best score {score}")
 
     def predict(self, index, component_predictions):
         """
