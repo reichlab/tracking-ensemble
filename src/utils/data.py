@@ -128,16 +128,16 @@ def available_models(exp_dir: str) -> List[str]:
     ])
 
 
-def get_seasons_data(seasons: List[int], adl: ActualData, cmps: List[Component]) -> Tuple[Index, List[Data], Data]:
+def get_seasons_data(ad: ActualData, cmps: List[Component], seasons: List[int], target: str, region: str) -> Tuple[Index, List[Data], Data]:
     """
     Return a tuple of yi, Xs and y for the givens seasons, concatenated.
     """
 
-    ypairs = [ad.get(TARGET, region_name=REGION, season=s) for s in seasons]
+    ypairs = [ad.get(target, region_name=region, season=s) for s in seasons]
     yi = pd.concat([yp[0] for yp in ypairs], ignore_index=True)
     Xs = [
-        np.concatenate([c.get(TARGET, region_name=REGION, season=s)[1] for s in seasons])
-        for c in components
+        np.concatenate([c.get(target, region_name=region, season=s)[1] for s in seasons])
+        for c in cmps
     ]
     y = np.concatenate([yp[1] for yp in ypairs])
 
