@@ -16,6 +16,22 @@ Index = pd.DataFrame
 Data = np.ndarray
 
 
+def get_seasons_data(seasons: List[int], adl: ActualData, cmps: List[Component]) -> Tuple[Index, List[Data], Data]:
+    """
+    Return a tuple of yi, Xs and y for the givens seasons, concatenated.
+    """
+
+    ypairs = [ad.get(TARGET, region_name=REGION, season=s) for s in seasons]
+    yi = pd.concat([yp[0] for yp in ypairs], ignore_index=True)
+    Xs = [
+        np.concatenate([c.get(TARGET, region_name=REGION, season=s)[1] for s in seasons])
+        for c in components
+    ]
+    y = np.concatenate([yp[1] for yp in ypairs])
+
+    return yi, Xs, y
+
+
 def available_models(exp_dir: str) -> List[str]:
     """
     Return name of models available as components in exp_dir
