@@ -16,34 +16,6 @@ Index = pd.DataFrame
 Data = np.ndarray
 
 
-def get_seasons_data(seasons: List[int], adl: ActualData, cmps: List[Component]) -> Tuple[Index, List[Data], Data]:
-    """
-    Return a tuple of yi, Xs and y for the givens seasons, concatenated.
-    """
-
-    ypairs = [ad.get(TARGET, region_name=REGION, season=s) for s in seasons]
-    yi = pd.concat([yp[0] for yp in ypairs], ignore_index=True)
-    Xs = [
-        np.concatenate([c.get(TARGET, region_name=REGION, season=s)[1] for s in seasons])
-        for c in components
-    ]
-    y = np.concatenate([yp[1] for yp in ypairs])
-
-    return yi, Xs, y
-
-
-def available_models(exp_dir: str) -> List[str]:
-    """
-    Return name of models available as components in exp_dir
-    """
-
-    return sorted([
-        model for model in
-        os.listdir(exp_dir)
-        if path.isdir(path.join(exp_dir, model))
-    ])
-
-
 def _narrow_selection(index: Index, data: Data, region_name: str, season: int) -> Tuple[Index, Data]:
     """
     Return a narrowed index and data using the region and season information on the index.
@@ -142,3 +114,31 @@ class ActualData:
             data = np.array([epiweek_to_model_week(ew) for ew in data])
 
         return _narrow_selection(index, data, region_name, season)
+
+
+def available_models(exp_dir: str) -> List[str]:
+    """
+    Return name of models available as components in exp_dir
+    """
+
+    return sorted([
+        model for model in
+        os.listdir(exp_dir)
+        if path.isdir(path.join(exp_dir, model))
+    ])
+
+
+def get_seasons_data(seasons: List[int], adl: ActualData, cmps: List[Component]) -> Tuple[Index, List[Data], Data]:
+    """
+    Return a tuple of yi, Xs and y for the givens seasons, concatenated.
+    """
+
+    ypairs = [ad.get(TARGET, region_name=REGION, season=s) for s in seasons]
+    yi = pd.concat([yp[0] for yp in ypairs], ignore_index=True)
+    Xs = [
+        np.concatenate([c.get(TARGET, region_name=REGION, season=s)[1] for s in seasons])
+        for c in components
+    ]
+    y = np.concatenate([yp[1] for yp in ypairs])
+
+    return yi, Xs, y
