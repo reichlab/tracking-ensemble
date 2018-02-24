@@ -490,7 +490,7 @@ class KDemWeightEnsemble(SerializerMixin, Model):
 
         model_week = u.epiweek_to_model_week(index["epiweek"])
         partitions = np.cumsum(self._partition_lengths)
-        partition_idx = np.sum(np.cumsum(partitions) <= model_week)
+        partition_idx = np.sum(partitions <= model_week)
         weights = self._partition_weights[partition_idx]
 
         return udists.weighted_ensemble(component_predictions, weights)
