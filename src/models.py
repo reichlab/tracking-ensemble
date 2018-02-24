@@ -530,7 +530,7 @@ class MPWeightEnsemble(SerializerMixin, Model):
         self._past_predictions = state["past_predictions"]
 
     def train(self, index_vec, component_predictions_vec, truth_vec):
-        self._weights = np.ones((self.n_comps,))
+        self._weights = np.ones((self.n_comps,)) / self.n_comps
         self._past_predictions = []
         self._past_gains = []
 
@@ -540,7 +540,7 @@ class MPWeightEnsemble(SerializerMixin, Model):
         """
 
         self._past_predictions.append(component_predictions)
-        return udists.weighted_ensemble(component_predictions, self._weights / np.sum(self._weights))
+        return udists.weighted_ensemble(component_predictions, self._weights)
 
     def feedback(self, last_truth):
         """
@@ -550,3 +550,4 @@ class MPWeightEnsemble(SerializerMixin, Model):
         last_probabilities = udists.prediction_probabilities(self._past_predictions[-1], np.array([last_truth]), self.target)[0]
         self._past_gains.append(last_probabilities)
         self._weights *= last_probabilities ** self._eta
+        self._weights = self._weights / np.sum(self._weights)
