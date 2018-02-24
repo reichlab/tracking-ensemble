@@ -107,6 +107,7 @@ dependencies:
     - ratelimiter==1.2.0.post0
     - requests==2.18.4
     - snakemake==4.6.0
+    - stringcase==1.2.0
     - tabulate==0.8.2
     - tqdm==4.19.5
     - typed-ast==1.1.0
