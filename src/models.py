@@ -382,7 +382,7 @@ class ScoreWeightEnsemble(SerializerMixin, Model):
         """
 
         model_week = u.epiweek_to_model_week(index["epiweek"])
-        weights = self._weights[self._model_weeks.index(model_week)]
+        weights = self._weights[list(self._model_weeks).index(model_week)]
 
         return udists.weighted_ensemble(component_predictions, weights)
 
@@ -505,6 +505,8 @@ class MPWeightEnsemble(SerializerMixin, Model):
         self.target = target
         self.n_comps = n_comps
         self._eta = eta
+        self._past_predictions = []
+        self._past_gains = []
 
     @property
     def params(self):
