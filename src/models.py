@@ -238,7 +238,7 @@ class DemWeightEnsemble(SerializerMixin, Model):
 
     @fit_params.setter
     def fit_params(self, fit_params):
-        super().fit_params = fit_params
+        Model.fit_params.fset(self, fit_params)
         self._weights = np.array(fit_params["weights"])
 
     def predict(self, index, component_predictions):
@@ -280,7 +280,7 @@ class HitWeightEnsemble(SerializerMixin, Model):
 
     @params.setter
     def params(self, params):
-        super().params = params
+        Model.params.fset(self, params)
         self._beta = params["beta"]
 
     @property
@@ -289,7 +289,7 @@ class HitWeightEnsemble(SerializerMixin, Model):
 
     @fit_params.setter
     def fit_params(self, fit_params):
-        super().fit_params = fit_params
+        Model.fit_params.fset(self, fit_params)
         self._weights = np.array(fit_params["weights"])
 
     def train(self, index_vec, component_predictions_vec, truth_vec):
@@ -337,7 +337,7 @@ class ScoreWeightEnsemble(SerializerMixin, Model):
 
     @params.setter
     def params(self, params):
-        super().params = params
+        Model.params.fset(self, params)
         self._beta = params["beta"]
 
     @property
@@ -350,7 +350,7 @@ class ScoreWeightEnsemble(SerializerMixin, Model):
 
     @fit_params.setter
     def fit_params(self, fit_params):
-        super().fit_params = fit_params
+        Model.fit_params.fset(self, fit_params)
         self._weights = np.array(fit_params["weights"])
         self._model_weeks = np.array(fit_params["model_weeks"])
 
@@ -403,7 +403,7 @@ class KDemWeightEnsemble(SerializerMixin, Model):
 
     @params.setter
     def params(self, params):
-        super().params = params
+        Model.params.fset(self, params)
         self._k = params["k"]
 
     @property
@@ -416,7 +416,7 @@ class KDemWeightEnsemble(SerializerMixin, Model):
 
     @fit_params.setter
     def fit_params(self, fit_params):
-        super().fit_params = fit_params
+        Model.fit_params.fset(self, fit_params)
         self._partition_lengths = fit_params["partition_lengths"]
         self._partition_weights = np.array(fit_params["partition_weights"])
 
@@ -512,7 +512,7 @@ class MPWeightEnsemble(SerializerMixin, Model):
 
     @params.setter
     def params(self, params):
-        super().params = params
+        Model.params.fset(self, params)
         self._eta = params["eta"]
 
     @property
