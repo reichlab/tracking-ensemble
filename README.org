@@ -84,10 +84,10 @@ The following are the models to be tried out in this work.
 - [X] ~Score based weighing~ scheme for each epiweek. This has one temperature
   parameter in the softmax function which we will optimize using cross
   validation.
-- [ ] ~k-partition~ degenerate em. Here we learn optimal k partitions of a season
+- [X] ~k-partition~ degenerate em. Here we learn optimal k partitions of a season
   such that the degenerate em method run on each partition provide an overall
   better performance as compared to being run on the whole season.
-- [ ] ~Multiplicative weights~. A dynamically changing weight assignment scheme
+- [X] ~Multiplicative weights~. A dynamically changing weight assignment scheme
   depending on live losses received.
 
 * Evaluation
