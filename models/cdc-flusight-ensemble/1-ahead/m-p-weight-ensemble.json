@@ -1,1 +1,1 @@
-{"params": {"eta": 1.1, "target": "1-ahead", "n_comps": 22}, "fit_params": {}}
+{"params": {"beta": 0.9, "target": "1-ahead", "n_comps": 22}, "fit_params": {}}
