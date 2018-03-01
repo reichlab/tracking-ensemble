@@ -95,7 +95,7 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def train(self, index_vec, component_predictions_vec, truth_vec):
+    def fit(self, index_vec, component_predictions_vec, truth_vec):
         """
         Train the model
 
@@ -179,7 +179,7 @@ class OracleEnsemble(SerializerMixin, Model):
         self.target = target
         self.n_comps = n_comps
 
-    def train(self, index_vec, component_predictions_vec, truth_vec):
+    def fit(self, index_vec, component_predictions_vec, truth_vec):
         pass
 
     def predict(self, index, component_predictions, truth):
@@ -202,7 +202,7 @@ class MeanEnsemble(SerializerMixin, Model):
         self.target = target
         self.n_comps = n_comps
 
-    def train(self, index_vec, component_predictions_vec, truth_vec):
+    def fit(self, index_vec, component_predictions_vec, truth_vec):
         pass
 
     def predict(self, index, component_predictions):
@@ -223,7 +223,7 @@ class DemWeightEnsemble(SerializerMixin, Model):
         self.target = target
         self.n_comps = n_comps
 
-    def train(self, index_vec, component_predictions_vec, truth_vec):
+    def fit(self, index_vec, component_predictions_vec, truth_vec):
         """
         Use degenerate EM to find the best set of weights optimizing the log scores
         """
@@ -292,7 +292,7 @@ class HitWeightEnsemble(SerializerMixin, Model):
         Model.fit_params.fset(self, fit_params)
         self._weights = np.array(fit_params["weights"])
 
-    def train(self, index_vec, component_predictions_vec, truth_vec):
+    def fit(self, index_vec, component_predictions_vec, truth_vec):
         """
         Count the number of best hits and pass through the softmax to get weights
         """
@@ -354,7 +354,7 @@ class ScoreWeightEnsemble(SerializerMixin, Model):
         self._weights = np.array(fit_params["weights"])
         self._model_weeks = np.array(fit_params["model_weeks"])
 
-    def train(self, index_vec, component_predictions_vec, truth_vec):
+    def fit(self, index_vec, component_predictions_vec, truth_vec):
         """
         Group the scores according to model weeks
         """
@@ -467,7 +467,7 @@ class KDemWeightEnsemble(SerializerMixin, Model):
 
         return optimal_score, optimal_lengths, optimal_weights
 
-    def train(self, index_vec, component_predictions_vec, truth_vec):
+    def fit(self, index_vec, component_predictions_vec, truth_vec):
         """
         Use degenerate EM to find the best set of weights optimizing the log scores.
         Assume model weeks is a sequence from 0 to nweeks - 1 with no gaps or other stuff
@@ -531,7 +531,7 @@ class MPWeightEnsemble(SerializerMixin, Model):
         self._past_gains = state["past_gains"]
         self._past_predictions = state["past_predictions"]
 
-    def train(self, index_vec, component_predictions_vec, truth_vec):
+    def fit(self, index_vec, component_predictions_vec, truth_vec):
         self._weights = np.ones((self.n_comps,)) / self.n_comps
         self._past_predictions = []
         self._past_gains = []
