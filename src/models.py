@@ -501,21 +501,21 @@ class MPWeightEnsemble(SerializerMixin, Model):
     Simple multiplicative weighing algorithm (hedge).
     """
 
-    def __init__(self, target: str, n_comps: int, eta: int):
+    def __init__(self, target: str, n_comps: int, beta: int):
         self.target = target
         self.n_comps = n_comps
-        self._eta = eta
+        self._beta = beta
         self._past_predictions = []
         self._past_gains = []
 
     @property
     def params(self):
-        return { "eta": self._eta, **super().params }
+        return { "beta": self._beta, **super().params }
 
     @params.setter
     def params(self, params):
         Model.params.fset(self, params)
-        self._eta = params["eta"]
+        self._beta = params["beta"]
 
     @property
     def state(self):
@@ -551,4 +551,4 @@ class MPWeightEnsemble(SerializerMixin, Model):
 
         last_probabilities = udists.prediction_probabilities(self._past_predictions[-1], np.array([last_truth]), self.target)[0]
         self._past_gains.append(last_probabilities)
-        self._weights *= self._eta ** last_probabilities
+        self._weights *= self._beta ** (1 - last_probabilities)
