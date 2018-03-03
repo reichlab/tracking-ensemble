@@ -1,11 +1,18 @@
 DATA_DIR = {
     "external": "data/external/cdc-flusight-ensemble",
-    "processed": "data/processed/cdc-flusight-ensemble"
+    "processed": "data/processed/cdc-flusight-ensemble",
+    "processed-live": "data/processed/cdc-flusight-ensemble-live"
 }
 
 rule setup_node:
     output: "node_modules/flusight-csv-tools"
     shell: "npm install"
+
+rule process_live_data:
+    input: DATA_DIR["external"]
+    output: dir = DATA_DIR["processed-live"],
+            index = f"{DATA_DIR['processed-live']}/index.csv"
+    shell: "node ./scripts/process-ensemble-data.js {input} {output.dir} --live"
 
 rule process_ensemble_data:
     input: DATA_DIR["external"]

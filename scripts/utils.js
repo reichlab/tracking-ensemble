@@ -29,8 +29,8 @@ const npSaveTxt = (array, filePath) => {
 /**
  * Return a list of paths to model directories
  */
-const getModels = (rootDir) => {
-  let modelsDir = path.join(rootDir, 'model-forecasts/component-models')
+const getModels = (rootDir, live) => {
+  let modelsDir = path.join(rootDir, live ? 'model-forecasts/real-time-component-models' : 'model-forecasts/component-models')
   return fs.readdirSync(modelsDir)
     .map(it => path.join(modelsDir, it))
     .filter(it => fs.statSync(it).isDirectory())

@@ -7,10 +7,11 @@ const path = require('path')
 const u = require('./utils')
 
 if (process.argv.length < 4) {
-  console.log(`Usage: node <script-name> <input-dir> <output-dir>`)
+  console.log(`Usage: node <script-name> <input-dir> <output-dir> [--live]`)
   process.exit(1)
 }
 
+const LIVE_SEASON = (process.argv.length === 5) && (process.argv.some(a => a === '--live'))
 const INPUT_DIR = process.argv[2]
 const OUTPUT_DIR = process.argv[3]
 
@@ -109,6 +110,6 @@ function getFilterIndices (indices) {
   return u.intersectionIndices(indices, comparator)
 }
 
-let modelData = processModels(u.getModels(INPUT_DIR))
+let modelData = processModels(u.getModels(INPUT_DIR, LIVE_SEASON))
 let filterIndices = getFilterIndices(modelData.map(md => md.indices))
 dumpData(modelData, filterIndices).then(() => console.log('All done'))
