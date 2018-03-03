@@ -8,7 +8,7 @@ rule setup_node:
     output: "node_modules/flusight-csv-tools"
     shell: "npm install"
 
-rule process_live_data:
+rule process_ensemble_data_live:
     input: DATA_DIR["external"]
     output: dir = DATA_DIR["processed-live"],
             index = f"{DATA_DIR['processed-live']}/index.csv"
@@ -30,4 +30,9 @@ rule patch_missing_files:
 rule collect_actual_data:
     input: f"{DATA_DIR['processed']}/index.csv"
     output: f"{DATA_DIR['processed']}/actual.csv"
+    shell: "node ./scripts/collect-actual-data.js {input} {output}"
+
+rule collect_actual_data_live:
+    input: f"{DATA_DIR['processed-live']}/index.csv"
+    output: f"{DATA_DIR['processed-live']}/actual.csv"
     shell: "node ./scripts/collect-actual-data.js {input} {output}"
