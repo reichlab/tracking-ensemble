@@ -108,8 +108,9 @@ const intersectionIndices = (arrays, comparator) => {
   // March forward
   const advancePositions = positions => {
     // Find the max item, increment all the others
-    let maxIdx = argmax(positionValues(positions), comparator)
-    return positions.map((p, i) => i === maxIdx ? p : p + 1)
+    let values = positionValues(positions)
+    let maxIdx = argmax(values, comparator)
+    return positions.map((p, i) => comparator(values[i], values[maxIdx]) === 0 ? p : p + 1)
   }
 
   // Values at the current positions
