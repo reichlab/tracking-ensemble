@@ -30,6 +30,7 @@ def dem(mat, weights=None, epsilon=None):
     Run the degenerate EM algorithm on given data. Return a set of weights for
     each model. Code replicates the method implemented in epiforecast-R package
     here https://github.com/cmu-delphi/epiforecast-R/blob/master/epiforecast/R/ensemble.R
+
     Parameters
     ----------
     mat : np.ndarray
