@@ -193,6 +193,37 @@ class OracleEnsemble(SerializerMixin, Model):
         return component_predictions[best_model_idx]
 
 
+class IthExpertEnsemble(SerializerMixin, Model):
+    """
+    Picks expert i and goes with it
+    """
+
+    def __init__(self, target: str, n_comps: int, i: int):
+        self.target = target
+        self.n_comps = n_comps
+        self._i = i
+
+    def fit(self, index_vec, component_predictions_vec, truth_vec):
+        pass
+
+    @property
+    def params(self):
+        return { "i": self._i, **super().params }
+
+    @params.setter
+    def params(self, params):
+        Model.params.fset(self, params)
+        self._i = params["i"]
+
+    def predict(self, index, component_predictions):
+        """
+        Use the truth to identify the best component. Then output its
+        prediction
+        """
+
+        return component_predictions[self._i]
+
+
 class MeanEnsemble(SerializerMixin, Model):
     """
     Mean ensemble. Outputs the mean of predictions from the components.
