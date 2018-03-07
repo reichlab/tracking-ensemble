@@ -114,5 +114,5 @@ dependencies:
     - typed-ast==1.1.0
     - urllib3==1.22
     - wrapt==1.10.11
-prefix: /home/lepisma/.pyenv/versions/miniconda3-latest/envs/tracking-ensemble
+prefix: /home/lepisma/.miniconda/envs/tracking-ensemble
 
