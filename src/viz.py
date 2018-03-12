@@ -41,7 +41,7 @@ def gh_heatmap(ax: plt.Axes, mat: np.ndarray, xticklabels: List[str], yticklabel
         for j in range(n_rows):
             r = mpl.patches.FancyBboxPatch(
                 (i + padding + offset, j + padding + offset), 1 - 2 * padding, 1 - 2 * padding,
-                color=mpl.cm.viridis(mat[n_rows - j - 1,i]),
+                color=mpl.cm.viridis_r(mat[n_rows - j - 1,i]),
                 boxstyle=mpl.patches.BoxStyle("Round", pad=0.1)
             )
             ax.add_patch(r)
