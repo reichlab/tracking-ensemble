@@ -118,8 +118,8 @@ final loss can differ from its first estimate loss. Since each model provides a
 distribution as its prediction, all $\theta$ values are naturally upper bounded
 by 1.
 
-\[ \hat{m}_i(t) - \sum_{j=1}^{k} \theta_i(j) \le m_i(t) \le \hat{m}_i(t) +
-\sum_{j=1}^{k} \theta_i(j) \]
+\[ \sum_{j=1}^{k} \theta_i(j) = \max_{t \in [1..T]} \vert m_i(t) - \hat{m}_i(t)
+\vert \]
 
 Each model's lag performance can be specified by its loss values in the shaded
 region of figure ref:fig:mm. Such plots might help us figure out models to keep
