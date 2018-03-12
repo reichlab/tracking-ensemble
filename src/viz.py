@@ -20,6 +20,33 @@ def find_theta(m: Vec, m_hat: Vec) -> float:
     return np.max(np.abs(m - m_hat))
 
 
+def gh_heatmap(ax: plt.Axes, mat: np.ndarray, xticklabels: List[str], yticklabels: List[str]):
+    """
+    Plot github style discrete heatmaps
+    """
+
+    n_rows, n_cols = mat.shape
+
+    # Set limits
+    ax.set_xlim(0, n_cols + 1)
+    ax.set_ylim(0, n_rows + 1)
+    ax.set_xticks(range(1, n_cols + 1))
+    ax.set_xticklabels(xticklabels, rotation="90")
+    ax.set_yticks(range(1, n_rows + 1))
+    ax.set_yticklabels(yticklabels[::-1])
+
+    padding = 0.2
+    offset = 0.5
+    for i in range(n_cols):
+        for j in range(n_rows):
+            r = mpl.patches.FancyBboxPatch(
+                (i + padding + offset, j + padding + offset), 1 - 2 * padding, 1 - 2 * padding,
+                color=mpl.cm.viridis(mat[n_rows - j - 1,i]),
+                boxstyle=mpl.patches.BoxStyle("Round", pad=0.1)
+            )
+            ax.add_patch(r)
+
+
 def plot_mm(ax: plt.Axes, m: Vec, m_hat: Vec, color: Color):
     """
     Place mm plot on the given axes
