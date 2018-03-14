@@ -104,28 +104,58 @@ There are a few things to note regarding the component models:
   best one considering its $L_i$ can be removed without any theoretical loss in
   performance.
 
-** TODO Hedging by preempting the estimate
+** Hedging by preempting the estimate
 
-To reduce the effect of truth revisions, we can update weights /not/ based on
-the first performance estimate but on an offset value which depends on the
-history of the lags. Waiting on the result we get from $\hat{m}-m$ plots. See
-next section.
+To reduce the effect of truth revisions, we can update weights /not/ based on the
+first performance estimate but on an offset value which depends on the history
+of the lags. This basically means to add an estimate for the error $\hat{m} - m$
+(using the mean of past values) in the current $\hat{m}$.
 
-* Getting around $\theta$
+The problem is that we don't know have enough time points to provide good
+theoretical bounds for this method (or there might be better ways that I am not
+aware of as of yet). For example, using the hoeffdings inequality we accumulate
+the following deviations from the mean (of $\hat{m} - m$) with probability $\le 1$
+(the useless bound case). Assume $\hat{m} - m \in [-1, 1]$ and 52 time steps to
+work with.
+
+#+BEGIN_SRC lisp :exports both :results output
+  (let ((error-bound 2))
+    (print (loop for n from 1 to 52
+                 collect (* error-bound (sqrt (/ (log 2)
+                                              (* 2 n)))))))
+#+END_SRC
+
+#+RESULTS:
+: 
+: (1.17741 0.83255464 0.679778 0.588705 0.52655375 0.48067564 0.44501916
+:  0.41627732 0.39247 0.37232974 0.3550025 0.339889 0.32655478 0.31467608
+:  0.30400595 0.2943525 0.28556386 0.2775182 0.2701164 0.26327688 0.25693193
+:  0.25102466 0.24550696 0.24033782 0.235482 0.23090911 0.22659266 0.22250958
+:  0.21863955 0.21496467 0.21146908 0.20813866 0.20496078 0.20192415 0.19901863
+:  0.196235 0.19356501 0.19100112 0.1885365 0.18616487 0.18388055 0.18167831
+:  0.17955334 0.17750125 0.17551792 0.17359965 0.1717429 0.1699445 0.16820143
+:  0.16651092 0.16487038 0.16327739) 
+
+Which sums to 15.342921.
+
+Although, if there are systematic distribution tendencies in the model (see next
+section) it is going to be reasonable, empirically, to initialize the error
+offsets using the mean values of past points and go preempting from there on.
+
+* Understanding $\theta$
 
 In the current formulation, $\theta$ sets the upper limit on how much a model's
 final loss can differ from its first estimate loss. Since each model provides a
 distribution as its prediction, all $\theta$ values are naturally upper bounded
 by 1.
 
-\[ \sum_{j=1}^{k} \theta_i(j) = \max_{t \in [1..T]} \vert m_i(t) - \hat{m}_i(t)
-\vert \]
+\[ \sum_{j=1}^{k} \theta_i(j) = \max_{t \in [1..T]} \vert m_i(t) - \hat{m}_i(t) \vert \]
 
 Each model's lag performance can be specified by its loss values in the shaded
 region of figure ref:fig:mm. Such plots might help us figure out models to keep
 in the tracking ensemble and also help in understanding the $\theta$ values.
 
-\begin{figure}
+\begin{figure}[H]
 \centering
 \begin{tikzpicture}
   \coordinate (O) at (0,0);
