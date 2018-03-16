@@ -183,7 +183,8 @@ high $\Delta$ ($= \vert \hat{m}_i - m_i \vert$). A model which does really good 
 have high $\hat{m}_i$ but will also have high $\Delta$. All lines parallel to $\hat{m}_i=m_i$ denote a single value of
 $\Delta$. $\Delta$ is 0 at $\hat{m}_i=m_i$ and grows on both sides as shown. {\sl Note that only the shaded portion
 is the valid region for points to lie in since we can constraint $m$ values using the fact that they are generated from
-the complement of a probability distribution.}}
+the complement of a probability distribution. However, the points can also lie outside the region if they are on the $x=y$
+line, meaning the observed and actual truth were the same.}}
 \label{fig:mm}
 \end{figure}
 
