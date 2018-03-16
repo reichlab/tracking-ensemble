@@ -47,7 +47,7 @@ def gh_heatmap(ax: plt.Axes, mat: np.ndarray, xticklabels: List[str], yticklabel
             ax.add_patch(r)
 
 
-def plot_mm(ax: plt.Axes, m: Vec, m_hat: Vec, color: Color):
+def plot_mm(ax: plt.Axes, m: Vec, m_hat: Vec, color: Color, title=""):
     """
     Place mm plot on the given axes
     """
@@ -86,4 +86,13 @@ def plot_mm(ax: plt.Axes, m: Vec, m_hat: Vec, color: Color):
     mp_y = mpl.lines.Line2D([0, mp[0]], [mp[1], mp[1]], linestyle="dotted", color="gray", alpha=0.3)
     ax.add_line(mp_y)
 
+    # Mean projection annotations
+    ax.annotate(f"{mp[0]:.4f}", xy=(mp[0], 0), xytext=(mp[0] - 0.05, 0.05),
+                arrowprops=dict(facecolor="gray", headwidth=1, width=1, shrink=0.05),
+                horizontalalignment="right")
+    ax.annotate(f"{mp[1]:.4f}", xy=(0, mp[1]), xytext=(0.05, mp[1] - 0.05),
+                arrowprops=dict(facecolor="gray", headwidth=1, width=1, shrink=0.05),
+                horizontalalignment="left")
+
     ax.legend()
+    ax.set_title(title)
