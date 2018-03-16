@@ -47,7 +47,7 @@ def gh_heatmap(ax: plt.Axes, mat: np.ndarray, xticklabels: List[str], yticklabel
             ax.add_patch(r)
 
 
-def plot_mm(ax: plt.Axes, m: Vec, m_hat: Vec, color: Color, title=""):
+def plot_mm(ax: plt.Axes, m: Vec, m_hat: Vec, title=""):
     """
     Place mm plot on the given axes
     """
@@ -62,9 +62,9 @@ def plot_mm(ax: plt.Axes, m: Vec, m_hat: Vec, color: Color, title=""):
     # Draw theta lines
     theta = find_theta(m, m_hat)
     x_line = mpl.lines.Line2D([theta, lim], [0, lim - theta],
-                              linestyle="--", color=color, alpha=0.7,
+                              linestyle="--", alpha=0.7,
                               label=f"$\\theta = {theta:.2f}$")
-    y_line = mpl.lines.Line2D([0, lim - theta], [theta, lim], linestyle="--", color=color, alpha=0.7)
+    y_line = mpl.lines.Line2D([0, lim - theta], [theta, lim], linestyle="--", alpha=0.7)
     ax.add_line(x_line)
     ax.add_line(y_line)
 
@@ -72,13 +72,14 @@ def plot_mm(ax: plt.Axes, m: Vec, m_hat: Vec, color: Color, title=""):
     ax.add_line(mpl.lines.Line2D([0, lim], [0, lim], linestyle="--", color="gray", alpha=0.3))
 
     # Draw scatter
-    sct = ax.scatter(m, m_hat, s=40, alpha=0.2, color=color)
+    colors = [mpl.cm.viridis_r(i / len(m)) for i in range(len(m))]
+    sct = ax.scatter(m, m_hat, s=40, alpha=0.5, c=colors)
     ax.set_xlabel("$m$")
     ax.set_ylabel("$\hat{m}$")
 
     # Draw mean point
     mp = (np.mean(m), np.mean(m_hat))
-    ax.add_patch(mpl.patches.Circle(mp, radius=0.015, color=color, alpha=0.8))
+    ax.add_patch(mpl.patches.Circle(mp, radius=0.015, color="gray", alpha=0.8))
 
     # Draw mean projections
     mp_x = mpl.lines.Line2D([mp[0], mp[0]], [0, mp[1]], linestyle="dotted", color="gray", alpha=0.3)
