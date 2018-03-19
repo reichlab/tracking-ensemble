@@ -83,9 +83,9 @@ w_i(T + 1) &\le w_i(T) \beta^{m_i(T)} \beta^{-\sum_{j=1}^k \theta_i(j) j / T}
 This time we get the following bound:
 
 \[ L_H \le \frac{-\ln{w_i(1) - L_i \ln{\beta} }}{1 - \beta} -
-\frac{\ln{\beta}}{1 - \beta} \left(k \theta_i(k) + \left(\sum_{j=1}^{k-1}
-\theta_i(j) (2k - j) \right) + \max_{i' \in [1\ldots n]} \left(\sum_{j=1}^k
-\theta_{i'}(j) j \right) \right) \]
+\frac{\ln{\beta}}{1 - \beta} \left(\left(\sum_{j=1}^{k} \theta_i(j) (2k - j)
+\right) + \max_{i' \in [1\ldots n]} \left(\sum_{j=1}^k \theta_{i'}(j) j \right)
+\right) \]
 
 This doesn't involve $T$ and thus is asymptotically better. Another thing to
 note here is that the term involving $\max$ says that we can do better by
