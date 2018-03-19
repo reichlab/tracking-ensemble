@@ -178,9 +178,9 @@ in the tracking ensemble and also help in understanding the $\theta$ values.
   \draw[->, gray, thick] (3,2.8) -- (4,1.8) node[gray,below] {$\Delta$};
 
 \end{tikzpicture}
-\caption{$m-\hat{m}$ plot. A model really good with the actual truth will have $m_i$ values close to 1 but will have
+\caption{$m-\hat{m}$ plot. A model really good with the actual truth will have $m_i$ values close to 0 but will have
 high $\Delta$ ($= \vert \hat{m}_i - m_i \vert$). A model which does really good on first estimate of truth will
-have high $\hat{m}_i$ but will also have high $\Delta$. All lines parallel to $\hat{m}_i=m_i$ denote a single value of
+have low $\hat{m}_i$ but will also have high $\Delta$. All lines parallel to $\hat{m}_i=m_i$ denote a single value of
 $\Delta$. $\Delta$ is 0 at $\hat{m}_i=m_i$ and grows on both sides as shown. {\sl Note that only the shaded portion
 is the valid region for points to lie in since we can constraint $m$ values using the fact that they are generated from
 the complement of a probability distribution. However, the points can also lie outside the region if they are on the $x=y$
