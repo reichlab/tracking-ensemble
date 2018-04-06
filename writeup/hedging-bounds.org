@@ -113,26 +113,19 @@ $\hat{m} - m$ in the current $\hat{m}$.
 
 The practical problem here is that we probably don't have enough time points.
 Anyway, effectively what we are after is to minimize the total error we
-accumulate by this estimation, which is $\sum_{t=1}^T x(t) - E[\hat{m} - m]$.
-Here $x(t)$ is our estimate at time $t$. If $\hat{m} - m$ follows a distribution
-then a nice way to estimate this is to use a moving mean estimate:
+accumulate by this estimation, which is $\left(\sum_{t=1}^T x(t)\right) -
+E[\hat{m}(t) - m(t)]$. Here $x(t)$ is our estimate at time $t$. If $\hat{m}(t) -
+m(t)$ follows a distribution then a nice way to estimate this is to just use the
+mean of whatever truth values we know about:
 
-\[ x(t + 1) = \frac{t x(t)}{t + 1} + \frac{\hat{m}(t) - m(t)}{t + 1} \]
+\[ x(t) = \frac{1}{t'} \sum_{i = 1}^{i < t'} \hat{m}(i) - m(i) \]
 
-This puts the net loss we accumulate equal to the difference between sample mean
-and the expectation:
-
-\[ x(1) + \sum_{t = 1}^{T - 1}(\hat{m}(t) - m(t)) - T E[\hat{m} - m] \]
+Here, $t'$ is the time $< t$ for which we have full data.
 
 However, if the distribution is shifting, a better way might be to update
 estimate using an $\alpha$ mixing parameter like shown below:
 
 \[ x(t + 1) = \alpha x(t) + (1 - \alpha) (\hat{m}(t) - m(t)) \]
-
-This gives the value of $\sum_{t=1}^T x(t)$ as:
-
-\[ \alpha^{T - 1} x(1) + \frac{1 - \alpha}{\alpha} \left[\sum_{t = 1}^{T - 1}
-\alpha^t (\hat{m}(T - t) - m(T - t))\right] \]
 
 If there are systematic distribution tendencies in the model (see next section)
 it is going to be reasonable, empirically, to initialize the error offsets using
