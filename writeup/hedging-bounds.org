@@ -47,7 +47,15 @@ losses that each of the models and the ensemble as a whole receives. What we
 want is to bound the ensemble loss $L_H = \sum_{t=1}^{T} \sum_{i=1}^{n} p_{i}(t)
 m_{i}(t)$ in terms of the loss of any single expert $L_i = \sum_{t=1}^{T}
 m_{i}(t)$. Here $p_{i}(t)$ is the normalized weight $w_i(t)$ for expert $i$ at
-time $t$.
+time $t$. Summing over the relation between $\hat{m}_i(t)$ and $m_i(t)$, we get
+the following relations between $L$ and $\hat{L}$ ($\hat{L}$ is the sum of loss
+based only on the first estimate).
+
+\[ \hat{L}_i - T \sum_{j=1}^{k} \theta_i(j) \le L_i \le \hat{L}_i + T
+\sum_{j=1}^{k} \theta_i(j) \]
+
+\[ \hat{L}_H - T \max_{i' \in [1\ldots n]} \sum_{j=1}^{k} \theta_i(j) \le L_i
+\le \hat{L}_i + T \max_{i' \in [1\ldots n]} \sum_{j=1}^{k} \theta_i(j) \]
 
 ** Regular hedging bound
 If we do regular hedging and have the real time series in hand, then the bound
