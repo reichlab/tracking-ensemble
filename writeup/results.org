@@ -130,5 +130,9 @@ scheme cite:herbster1998tracking which adds another parameter $\alpha$ and avoid
 assigning near zero weights to models. Or simply put an interpolating parameter
 between equal weights and dem weights.
 
+Another promising direction not taken right now is to try follow the leader
+(FTL) type ensemble. Since our situation is not adversarial and component models
+don't jump a lot, we might get good mileage from FTL.
+
 bibliographystyle:unsrt
 bibliography:./library.bib
