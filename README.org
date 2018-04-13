@@ -93,4 +93,4 @@ The following are the models to be tried out in this work.
 * Evaluation
 
 For the preliminary analysis, we will use log score of latest truth as the
-maximization objective. See documents in ~./writeup~ for more details.
+maximization objective. See documents in ~./writeups~ for more details.
