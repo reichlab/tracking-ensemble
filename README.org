@@ -4,7 +4,7 @@
 This repository explores possible ways to set dynamic ensemble weights in a time
 series prediction setting.
 
-* Table of Contents                                       :TOC_4_gh:noexport:
+*** Table of Contents                                       :TOC_4_gh:noexport:
 - [[#problem][Problem]]
 - [[#data-description][Data description]]
   - [[#season-and-weeks][Season and weeks]]
