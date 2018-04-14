@@ -11,6 +11,7 @@ series prediction setting.
   - [[#component-models][Component models]]
 - [[#models-to-compare][Models to Compare]]
 - [[#evaluation][Evaluation]]
+- [[#steps-to-reproduce][Steps to reproduce]]
 
 * Problem
 As demonstrated in [[https://github.com/FluSightNetwork/cdc-flusight-ensemble][cdc-flusight-ensemble]] (and various other places), simply
@@ -94,3 +95,32 @@ The following are the models to be tried out in this work.
 
 For the preliminary analysis, we will use log score of latest truth as the
 maximization objective. See documents in ~./writeups~ for more details.
+
+* Steps to reproduce
+
+#+BEGIN_SRC sh
+  # Clone with submodules
+  git clone git@github.com:reichlab/tracking-ensemble --recursive
+  cd tracking-ensemble
+
+  # Create conda environment
+  conda env create -f environment.yml
+  conda activate tracking-ensemble
+
+  # Setup node dependencies
+  snakemake setup_node
+
+  # Patch for missing files
+  snakemake patch_missing_files
+
+  # Process data
+  snakemake process_ensemble_data
+  snakemake collect_actual_data
+
+  # We process data for live season (2017-2018) separately
+  snakemake process_ensemble_data_live
+  snakemake collect_actual_data_live
+
+  # Checkout the notebooks
+  jupyter notebook ./notebooks
+#+END_SRC
